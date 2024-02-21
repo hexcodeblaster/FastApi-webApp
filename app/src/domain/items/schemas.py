@@ -4,8 +4,8 @@ class Item(BaseModel):
     id: int
     name: str
     price: float
-    tax: float
-    units_left: int
+    tax: float | None = None
+    units_left: int | None = None
 
     class Config:
         orm_mode = True

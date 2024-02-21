@@ -17,3 +17,7 @@ def create_item(db: Session, item: Item_schema):
     db.commit()
     db.refresh(item_new)
     return item_new
+
+
+def delete_item(db: Session, item_id: int):
+    return db.query(Items).filter(Items.id == item_id).delete()

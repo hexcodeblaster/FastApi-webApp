@@ -20,4 +20,6 @@ def create_item(db: Session, item: Item_schema):
 
 
 def delete_item(db: Session, item_id: int):
-    return db.query(Items).filter(Items.id == item_id).delete()
+    deleted = db.query(Items).filter(Items.id == item_id).delete()
+    db.commit()
+    return deleted

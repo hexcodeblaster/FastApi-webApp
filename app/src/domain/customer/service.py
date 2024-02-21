@@ -13,8 +13,13 @@ def get_customers(db: Session, skip: int = 0, limit: int = 100):
 
 
 def create_customer(db: Session, customer=CustomerBase):
-    new_customer = CustomerBase(**customer.dict())
+    new_customer = Customer(**customer.dict())
     db.add(new_customer)
     db.commit()
     db.refresh(new_customer)
     return new_customer
+
+
+def delete_customer(db: Session, email_id: str):
+    db.query(Customer).filter(Customer.email_id == email_id).delete()
+    db.commit()

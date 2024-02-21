@@ -15,7 +15,8 @@ from fastAPI.app.src.domain.items.service import get_item as get_item_service, \
     delete_item as delete_item_service
 from fastAPI.app.src.domain.customer.service import get_customer as get_customer_service, \
     get_customers as get_customers_service, \
-    create_customer as create_customer_service
+    create_customer as create_customer_service, \
+    delete_customer as delete_customer_service
 from fastAPI.app.src.domain.items.models import Items
 from fastAPI.app.src.domain.items.schemas import *
 
@@ -46,23 +47,22 @@ async def delete_item(item_id: int, db: Session = Depends(get_db)):
 
 @app.get("/customer")
 async def get_customers(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
-    return db.query(Customer).offset(skip).limit(limit).all()
+    return get_customers_service(db=db, skip=skip, limit=limit)
 
 
 @app.get("/customer/{email_id}")
-async def get_customer(email_id: int, db: Session = Depends(get_db)):
-    return db.query(Customer).filter(Customer.email_id == email_id).all()
+async def get_customer(email_id: str, db: Session = Depends(get_db)):
+    return get_customer_service(db=db, email_id=email_id)
 
 
 @app.put("/customer/create_customer")
 async def create_customer(customer: CustomerBase, db: Session = Depends(get_db)):
-    new_customer = Customer(**customer.dict())
-    print("new customers: ", new_customer)
-    db.add(new_customer)
-    db.commit()
-    db.refresh(new_customer)
-    return new_customer
+    return create_customer_service(db=db, customer=customer)
 
+
+@app.delete("/customer/delete_customer")
+async def delete_customer(email_id: str, db: Session = Depends(get_db)):
+    delete_customer_service(db=db, email_id=email_id)
 
 Base.metadata.create_all(bind=engine)
 

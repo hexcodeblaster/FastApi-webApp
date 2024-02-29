@@ -13,10 +13,7 @@ from fastAPI.app.src.domain.items.service import get_item as get_item_service, \
     get_items as get_items_service, \
     create_item as create_item_service, \
     delete_item as delete_item_service
-from fastAPI.app.src.domain.customer.service import get_customer as get_customer_service, \
-    get_customers as get_customers_service, \
-    create_customer as create_customer_service, \
-    delete_customer as delete_customer_service
+from fastAPI.app.src.domain.customer.service import *
 from fastAPI.app.src.domain.items.models import Items
 from fastAPI.app.src.domain.items.schemas import *
 
@@ -63,6 +60,12 @@ async def create_customer(customer: CustomerBase, db: Session = Depends(get_db))
 @app.delete("/customer/delete_customer")
 async def delete_customer(email_id: str, db: Session = Depends(get_db)):
     delete_customer_service(db=db, email_id=email_id)
+
+
+@app.get("/customer/validate/{email_id}")
+async def validate_customer(email_id: str, password: str, db: Session = Depends(get_db)):
+    return validate_customer_service(db=db, email_id=email_id, password=password)
+
 
 Base.metadata.create_all(bind=engine)
 

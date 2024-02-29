@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, LargeBinary
 
 from fastAPI.app.src.database import Base
 
@@ -12,4 +12,7 @@ class Customer(Base):
     middle_name = Column(String)
     last_name = Column(String)
     phone_no = Column(String)
-    password = Column(String)
+    hashed_password = Column(LargeBinary)
+
+    def __str__(self):
+        return ", ".join(self.__dir__())

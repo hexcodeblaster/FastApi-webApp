@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+import bcrypt
 
 
 class CustomerBase(BaseModel):
@@ -9,3 +10,4 @@ class CustomerBase(BaseModel):
     last_name: str
     phone_no: str
     password: str
+

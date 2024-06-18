@@ -14,7 +14,7 @@ from jwt import PyJWTError
 
 SECRET_KEY = "abcd"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 20
+ACCESS_TOKEN_EXPIRE_MINUTES = 2
 
 
 def get_customer_service(db: Session, email_id: str):
@@ -26,14 +26,17 @@ def get_customers_service(db: Session, skip: int = 0, limit: int = 100):
 
 
 def create_customer_service(db: Session, customer=CustomerBase):
-    customer_dict = customer.dict()
-    customer_dict['hashed_password'] = bcrypt.hashpw(customer.password.encode('utf-8'), bcrypt.gensalt(6))
-    customer_dict.pop('password')
-    new_customer = Customer(**customer_dict)
-    db.add(new_customer)
-    db.commit()
-    db.refresh(new_customer)
-    return new_customer
+    try:
+        customer_dict = customer.dict()
+        customer_dict['hashed_password'] = bcrypt.hashpw(customer.password.encode('utf-8'), bcrypt.gensalt(6))
+        customer_dict.pop('password')
+        new_customer = Customer(**customer_dict)
+        db.add(new_customer)
+        db.commit()
+        db.refresh(new_customer)
+        return True
+    except Exception as e:
+        return False
 
 
 def delete_customer_service(db: Session, email_id: str):
@@ -58,13 +61,19 @@ def create_access_token(data: dict, expires_delta):
 
 def get_access_token(data: dict):
     expires_delta = datetime.timedelta(ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(data,expires_delta)
+    access_token = create_access_token(data, expires_delta)
     return access_token
 
 
-def authenticate(self, token: str):
+def authenticate(token: dict, db: Session):
     try:
+        token = token.get("access_token").removeprefix("Bearer ")
         payload = jwt.decode(token, SECRET_KEY, ALGORITHM)
-        print("payload: ", payload)
+        email_id = payload.get('email_id')
+        customer = get_customer_service(db, email_id=email_id)
+        hashed_password = payload.get('hashed_password')
+        if customer.hashed_password.decode('utf-8') == hashed_password:
+            return True
+        return False
     except PyJWTError:
         raise HTTPException(status_code=401, detail="Authentication failed, invalid or expired token")

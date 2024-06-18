@@ -2,7 +2,7 @@ import os.path
 from typing import List
 
 import uvicorn
-from fastapi import FastAPI, Depends, Form, HTTPException, Response, Request
+from fastapi import FastAPI, Depends, Form, HTTPException, Response, Request, Cookie
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse, RedirectResponse, FileResponse
 from fastapi.templating import Jinja2Templates
@@ -28,6 +28,7 @@ app.mount("/static", StaticFiles(directory="src/static"), name="static")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 templates = Jinja2Templates(directory=os.path.join("src/static"))
+
 
 @app.get("/items")
 async def get_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
@@ -81,23 +82,40 @@ async def customer_login(username: str = Form()):
     return {"email_id": username}
 
 
+@app.post("/customer/authenticate")
+async def customer_authenticate(request: Request, db: Session = Depends(get_db)):
+    if authenticate(request.cookies, db):
+        return Response("success")
+    return Response("failure")
+
+
 @app.post("/token")
-async def login(response: Response, request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+async def login(form_data: OAuth2PasswordRequestForm = Depends(),
+                db: Session = Depends(get_db)):
     try:
         if validate_customer_service(email_id=form_data.username, password=form_data.password, db=db):
             customer = jsonable_encoder(get_customer_service(db=db, email_id=form_data.username))
             access_token = get_access_token(customer)
-            # response = RedirectResponse(url="src/static/login_success.html")
-            response.set_cookie(key="access_token", value=f"Bearer {access_token}")
-            # return response
-            # return {"access_token": access_token, "token_type": "bearer"}
-            # return FileResponse("src/static/login_success.html")
-            return templates.TemplateResponse(request, "login_success.html")
+            response = JSONResponse(content=True)
+            response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=False)
+            return response
     except:
         raise HTTPException(
             status_code=400,
             detail="Incorrect details"
         )
+
+
+@app.get("/logout")
+async def logout():
+    response = JSONResponse(content=True)
+    response.delete_cookie(key="access_token")
+    return response
+
+
+@app.get("/cookie")
+async def read_cookie(access_token: str | None = Cookie()):
+    return {"ads_id ": access_token}
 
 
 @app.post("/login_test")
